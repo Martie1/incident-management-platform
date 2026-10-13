@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: platform
+  mvc:
+    problemdetails:
+      enabled: true
+
+app:
+  seed:
+    users: classpath:seed/users.json
+    incidents: classpath:seed/incidents.json
