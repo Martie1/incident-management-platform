@@ -6,8 +6,12 @@ import org.springframework.boot.WebApplicationType
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.core.NestedExceptionUtils
 import org.springframework.web.server.ResponseStatusException
+import spock.lang.Execution
 import spock.lang.Specification
 
+import static org.spockframework.runtime.model.parallel.ExecutionMode.SAME_THREAD
+
+@Execution(SAME_THREAD)
 class SeedStartupSpec extends Specification {
 
 	def "application does not start with #reason"() {
