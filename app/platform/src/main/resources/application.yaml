@@ -9,3 +9,18 @@ app:
   seed:
     users: classpath:seed/users.json
     incidents: classpath:seed/incidents.json
+
+logging:
+  level:
+    root: INFO
+    incident.management.platform: INFO
+    # Logbook writes request/response logs at TRACE
+    org.zalando.logbook.Logbook: TRACE
+
+logbook:
+  predicate:
+    include:
+      - path: /api/**
+  obfuscate:
+    json-body-fields:
+      - email

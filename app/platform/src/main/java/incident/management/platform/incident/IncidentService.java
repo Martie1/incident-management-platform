@@ -6,10 +6,12 @@ import java.util.List;
 
 import incident.management.platform.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IncidentService {
@@ -44,6 +46,8 @@ public class IncidentService {
 				.resolvedAt(status == Status.RESOLVED ? now : null)
 				.build();
 		repository.save(incident);
+		log.info("Created incident {} (severity={}, status={}, assignee={})",
+				incident.id(), incident.severity(), incident.status(), incident.assigneeId());
 		return incident;
 	}
 
@@ -62,6 +66,11 @@ public class IncidentService {
 				.resolvedAt(resolvedAt(current, status))
 				.build();
 		repository.save(incident);
+		if (current.status() != status) {
+			log.info("Incident {} status changed {} -> {}", id, current.status(), status);
+		}
+		log.info("Updated incident {} (severity={}, status={}, assignee={})",
+				id, incident.severity(), incident.status(), incident.assigneeId());
 		return incident;
 	}
 
@@ -69,6 +78,7 @@ public class IncidentService {
 		if (!repository.deleteById(id)) {
 			throw notFound(id);
 		}
+		log.info("Deleted incident {}", id);
 	}
 
 	private Instant resolvedAt(Incident current, Status newStatus) {
@@ -80,6 +90,7 @@ public class IncidentService {
 
 	private void validateAssignee(Long assigneeId) {
 		if (assigneeId != null && !userService.exists(assigneeId)) {
+			log.warn("Rejected incident with unknown assignee {}", assigneeId);
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assignee %d does not exist".formatted(assigneeId));
 		}
 	}
