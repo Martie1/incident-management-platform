@@ -1,0 +1,55 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar h1 {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions button {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.form-actions button {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.error {
+  color: var(--pico-del-color);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 1rem;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-severity-low { background: #6b7280; }
+.badge-severity-medium { background: #2563eb; }
+.badge-severity-high { background: #d97706; }
+.badge-severity-critical { background: #dc2626; }
+
+.badge-status-open { background: #0891b2; }
+.badge-status-in_progress { background: #7c3aed; }
+.badge-status-resolved { background: #16a34a; }
