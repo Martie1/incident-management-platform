@@ -21,6 +21,12 @@ class IncidentRepository {
 				.toList();
 	}
 
+	List<Incident> findByAssigneeId(long assigneeId) {
+		return incidents.values().stream()
+				.filter(incident -> incident.assigneeId() != null && incident.assigneeId() == assigneeId)
+				.toList();
+	}
+
 	Optional<Incident> findById(long id) {
 		return Optional.ofNullable(incidents.get(id));
 	}

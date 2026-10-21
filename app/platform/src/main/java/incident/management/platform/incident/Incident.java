@@ -4,7 +4,7 @@ import lombok.Builder;
 
 import java.time.Instant;
 
-@Builder
+@Builder(toBuilder = true)
 public record Incident(
 		Long id,
 		String title,
