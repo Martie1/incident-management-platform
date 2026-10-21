@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserService {
 
 	private final UserRepository repository;
+	private final UserAssignments userAssignments;
 
 	public List<User> findAll() {
 		return repository.findAll();
@@ -43,9 +44,9 @@ public class UserService {
 	}
 
 	public void delete(long id) {
-		if (!repository.deleteById(id)) {
-			throw notFound(id);
-		}
+		findById(id);
+		userAssignments.releaseAssignments(id);
+		repository.deleteById(id);
 		log.info("Deleted user {}", id);
 	}
 
