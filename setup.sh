@@ -11,7 +11,7 @@ done
 
 # start minikube cluster with addons
 if ! minikube status &> /dev/null; then
-    minikube start --cpus=4 --memory=8192 --driver=docker
+    minikube start --cpus=4 --memory=6144 --driver=docker
 fi
 
 minikube addons enable ingress
@@ -23,7 +23,7 @@ for ns in argocd monitoring incident-app; do
 done
 
 # install argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl rollout status deployment/argocd-server -n argocd --timeout=180s || true
 
 # install prometheus and loki charts
