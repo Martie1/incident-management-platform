@@ -1,0 +1,8 @@
+apiVersion: v2
+name: app-chart
+description: Helm chart for Incident Management Platform (Spring Boot Backend, Frontend, and PostgreSQL)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Incident Platform Team
