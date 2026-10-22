@@ -1,0 +1,40 @@
+# loki stack values
+loki:
+  enabled: true
+  isDefault: true
+  persistence:
+    enabled: false
+  config:
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 48h
+
+promtail:
+  enabled: true
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+    snippets:
+      extraScrapeConfigs: |
+        - job_name: incident-platform-logs
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+              action: keep
+              regex: app-chart.*
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+              target_label: component
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+
+fluent-bit:
+  enabled: false
+
+grafana:
+  enabled: false
+
+prometheus:
+  enabled: false
