@@ -2,14 +2,13 @@
 
 global:
   environment: production
-
 # backend configuration
 app:
   replicaCount: 2
   image:
     repository: ghcr.io/martie1/incident-management-platform/backend
     pullPolicy: Always
-    tag: "9dfd63b"
+    tag: "0a350cf"
   service:
     type: ClusterIP
     port: 8080
@@ -38,7 +37,6 @@ app:
       failureThreshold: 3
   env:
     springProfilesActive: prod
-
 # frontend configuration
 frontend:
   enabled: true
@@ -46,7 +44,7 @@ frontend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/frontend
     pullPolicy: Always
-    tag: "9dfd63b"
+    tag: "0a350cf"
   service:
     type: ClusterIP
     port: 80
@@ -58,7 +56,6 @@ frontend:
     requests:
       cpu: 50m
       memory: 64Mi
-
 # database configuration
 postgresql:
   image:
@@ -83,7 +80,6 @@ postgresql:
     requests:
       cpu: 100m
       memory: 256Mi
-
 # servicemonitor for prometheus
 serviceMonitor:
   enabled: true
@@ -92,7 +88,6 @@ serviceMonitor:
   path: /actuator/prometheus
   labels:
     release: prometheus-stack
-
 # ingress configuration
 ingress:
   enabled: true
