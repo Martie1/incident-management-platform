@@ -9,7 +9,7 @@ app:
   image:
     repository: ghcr.io/martie1/incident-management-platform/backend
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "9dfd63b"
   service:
     type: ClusterIP
     port: 8080
@@ -46,7 +46,7 @@ frontend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/frontend
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "9dfd63b"
   service:
     type: ClusterIP
     port: 80
@@ -63,7 +63,7 @@ frontend:
 postgresql:
   image:
     repository: postgres
-    tag: "18-alpine"
+    tag: "9dfd63b"
     pullPolicy: IfNotPresent
   service:
     port: 5432
