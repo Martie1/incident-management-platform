@@ -121,9 +121,8 @@ jobs:
           NEW_TAG="${{ needs.build-and-push.outputs.image_tag }}"
           echo "Updating backend and frontend image tags to: $NEW_TAG"
           
-          # update app image tag
-          sed -i.bak -E "s/(tag: \")[^\"]+(\")/\1$NEW_TAG\2/g" charts/app-chart/values.yaml
-          rm -f charts/app-chart/values.yaml.bak
+          # update only app and frontend image tags
+          yq -i ".app.image.tag = \"$NEW_TAG\" | .frontend.image.tag = \"$NEW_TAG\"" charts/app-chart/values.yaml
 
       - name: Commit and push changes
         run: |
