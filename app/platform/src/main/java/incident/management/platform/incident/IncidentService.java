@@ -22,8 +22,8 @@ public class IncidentService {
 
 	public List<Incident> findAll(Status status, Severity severity) {
 		return repository.findAll().stream()
-				.filter(incident -> status == null || incident.status() == status)
-				.filter(incident -> severity == null || incident.severity() == severity)
+				.filter(incident -> status == null || incident.getStatus() == status)
+				.filter(incident -> severity == null || incident.getSeverity() == severity)
 				.toList();
 	}
 
@@ -35,8 +35,7 @@ public class IncidentService {
 		validateAssignee(request.assigneeId());
 		var now = clock.instant();
 		var status = request.status() != null ? request.status() : Status.OPEN;
-		var incident = Incident.builder()
-				.id(repository.nextId())
+		var incident = repository.save(Incident.builder()
 				.title(request.title())
 				.description(request.description())
 				.severity(request.severity())
@@ -44,40 +43,39 @@ public class IncidentService {
 				.assigneeId(request.assigneeId())
 				.createdAt(now)
 				.resolvedAt(status == Status.RESOLVED ? now : null)
-				.build();
-		repository.save(incident);
+				.build());
 		log.info("Created incident {} (severity={}, status={}, assignee={})",
-				incident.id(), incident.severity(), incident.status(), incident.assigneeId());
+				incident.getId(), incident.getSeverity(), incident.getStatus(), incident.getAssigneeId());
 		return incident;
 	}
 
 	public Incident update(long id, IncidentRequest request) {
 		var current = findById(id);
 		validateAssignee(request.assigneeId());
-		var status = request.status() != null ? request.status() : current.status();
-		var incident = Incident.builder()
+		var status = request.status() != null ? request.status() : current.getStatus();
+		var incident = repository.save(Incident.builder()
 				.id(id)
 				.title(request.title())
 				.description(request.description())
 				.severity(request.severity())
 				.status(status)
 				.assigneeId(request.assigneeId())
-				.createdAt(current.createdAt())
+				.createdAt(current.getCreatedAt())
 				.resolvedAt(resolvedAt(current, status))
-				.build();
-		repository.save(incident);
-		if (current.status() != status) {
-			log.info("Incident {} status changed {} -> {}", id, current.status(), status);
+				.build());
+		if (current.getStatus() != status) {
+			log.info("Incident {} status changed {} -> {}", id, current.getStatus(), status);
 		}
 		log.info("Updated incident {} (severity={}, status={}, assignee={})",
-				id, incident.severity(), incident.status(), incident.assigneeId());
+				id, incident.getSeverity(), incident.getStatus(), incident.getAssigneeId());
 		return incident;
 	}
 
 	public void delete(long id) {
-		if (!repository.deleteById(id)) {
+		if (!repository.existsById(id)) {
 			throw notFound(id);
 		}
+		repository.deleteById(id);
 		log.info("Deleted incident {}", id);
 	}
 
@@ -85,7 +83,7 @@ public class IncidentService {
 		if (newStatus != Status.RESOLVED) {
 			return null;
 		}
-		return current.resolvedAt() != null ? current.resolvedAt() : clock.instant();
+		return current.getResolvedAt() != null ? current.getResolvedAt() : clock.instant();
 	}
 
 	private void validateAssignee(Long assigneeId) {

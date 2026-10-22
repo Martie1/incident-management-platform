@@ -1,5 +1,0 @@
-[
-  { "title": "Test incident", "severity": "HIGH", "status": "OPEN", "assigneeId": 1 },
-  { "title": "Test incident in progress", "severity": "LOW", "status": "IN_PROGRESS", "assigneeId": 2 },
-  { "title": "Test resolved incident", "severity": "CRITICAL", "status": "RESOLVED" }
-]

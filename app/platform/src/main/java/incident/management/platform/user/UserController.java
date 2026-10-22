@@ -37,7 +37,7 @@ class UserController {
 	@PostMapping
 	ResponseEntity<User> create(@Valid @RequestBody UserRequest request) {
 		var user = service.create(request);
-		return ResponseEntity.created(URI.create("/api/users/" + user.id())).body(user);
+		return ResponseEntity.created(URI.create("/api/users/" + user.getId())).body(user);
 	}
 
 	@PutMapping("/{id}")

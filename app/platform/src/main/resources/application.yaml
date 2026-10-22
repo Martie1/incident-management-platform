@@ -4,11 +4,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
-
-app:
-  seed:
-    users: classpath:seed/users.json
-    incidents: classpath:seed/incidents.json
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
 
 logging:
   level:

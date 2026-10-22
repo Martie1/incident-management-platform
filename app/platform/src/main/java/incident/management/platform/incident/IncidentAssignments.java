@@ -18,7 +18,7 @@ class IncidentAssignments implements UserAssignments {
 	public void releaseAssignments(long userId) {
 		var assigned = repository.findByAssigneeId(userId);
 		var openCount = assigned.stream()
-				.filter(incident -> incident.status() != Status.RESOLVED)
+				.filter(incident -> incident.getStatus() != Status.RESOLVED)
 				.count();
 		if (openCount > 0) {
 			log.warn("Rejected deletion of user {} with {} open incidents", userId, openCount);

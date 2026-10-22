@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
@@ -30,19 +31,19 @@ public class UserService {
 	}
 
 	public User create(UserRequest request) {
-		var user = repository.insert(request);
-		log.info("Created user {}", user.id());
+		var user = repository.save(new User(null, request.name(), request.email()));
+		log.info("Created user {}", user.getId());
 		return user;
 	}
 
 	public User update(long id, UserRequest request) {
 		findById(id);
-		var user = new User(id, request.name(), request.email());
-		repository.update(user);
+		var user = repository.save(new User(id, request.name(), request.email()));
 		log.info("Updated user {}", id);
 		return user;
 	}
 
+	@Transactional
 	public void delete(long id) {
 		findById(id);
 		userAssignments.releaseAssignments(id);

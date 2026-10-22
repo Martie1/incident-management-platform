@@ -1,10 +1,11 @@
 package incident.management.platform.incident
 
+import incident.management.platform.TestcontainersConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import spock.lang.Specification
 
@@ -21,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest
-@ActiveProfiles("test")
+@Import(TestcontainersConfiguration)
 @AutoConfigureMockMvc
 class IncidentControllerSpec extends Specification {
 
@@ -32,7 +33,7 @@ class IncidentControllerSpec extends Specification {
 		expect:
 		mockMvc.perform(get("/api/incidents"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath('$[0].title').value("Test incident"))
+				.andExpect(jsonPath('$[0].title').value("Payment API returns 500"))
 	}
 
 	def "filters incidents by status"() {

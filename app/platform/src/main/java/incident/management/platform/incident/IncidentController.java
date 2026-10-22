@@ -39,7 +39,7 @@ class IncidentController {
 	@PostMapping
 	ResponseEntity<Incident> create(@Valid @RequestBody IncidentRequest request) {
 		var incident = service.create(request);
-		return ResponseEntity.created(URI.create("/api/incidents/" + incident.id())).body(incident);
+		return ResponseEntity.created(URI.create("/api/incidents/" + incident.getId())).body(incident);
 	}
 
 	@PutMapping("/{id}")

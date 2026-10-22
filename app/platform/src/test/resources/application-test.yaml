@@ -1,4 +1,0 @@
-app:
-  seed:
-    users: classpath:seed/test-users.json
-    incidents: classpath:seed/test-incidents.json

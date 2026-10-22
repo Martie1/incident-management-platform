@@ -1,4 +1,0 @@
-[
-  { "name": "Test User", "email": "test.user@example.com" },
-  { "name": "Broken User", "email": "not-an-email" }
-]

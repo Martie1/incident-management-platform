@@ -1,11 +1,12 @@
 package incident.management.platform.user
 
 import com.jayway.jsonpath.JsonPath
+import incident.management.platform.TestcontainersConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import spock.lang.Specification
@@ -21,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest
-@ActiveProfiles("test")
+@Import(TestcontainersConfiguration)
 @AutoConfigureMockMvc
 class UserControllerSpec extends Specification {
 
@@ -32,7 +33,7 @@ class UserControllerSpec extends Specification {
 		expect:
 		mockMvc.perform(get("/api/users/1"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath('$.name').value("Test User"))
+				.andExpect(jsonPath('$.name').value("Anna Kowalska"))
 	}
 
 	def "creates and updates a user"() {
