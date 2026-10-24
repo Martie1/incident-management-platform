@@ -1,20 +1,7 @@
-# build frontend
-FROM node:24-alpine AS builder
-WORKDIR /app
+# the bundle is built and tested by CI (npm run build) - this image only serves it
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# serve with nginx
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
-
-RUN rm -rf ./*
-COPY --from=builder /app/dist .
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080

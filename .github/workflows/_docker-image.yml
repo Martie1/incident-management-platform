@@ -1,0 +1,84 @@
+name: Docker Image (reusable)
+
+# packages an artifact built earlier in the same run into an image and pushes it to GHCR
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: Image name suffix, e.g. backend -> ghcr.io/<owner>/<repo>/backend
+        required: true
+        type: string
+      context:
+        description: Docker build context
+        required: true
+        type: string
+      artifact:
+        description: Name of the build artifact to download into the context
+        required: true
+        type: string
+      artifact-path:
+        description: Where to put the artifact, relative to the context
+        required: true
+        type: string
+    outputs:
+      tag:
+        description: Tag of the pushed image (sha-<short sha>)
+        value: ${{ jobs.image.outputs.tag }}
+
+jobs:
+  image:
+    name: Build and push ${{ inputs.name }}
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ inputs.context }}/${{ inputs.artifact-path }}
+
+      # GHCR requires lowercase names, the repo owner is not
+      - name: Set image name and tag
+        id: vars
+        run: |
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/${{ inputs.name }}" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # tags plus OCI labels (source, revision, created) - the source label links the package to the repo
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.vars.outputs.image }}
+          tags: |
+            type=raw,value=${{ steps.vars.outputs.tag }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # separate scope per image, otherwise images overwrite each other's cache
+          cache-from: type=gha,scope=${{ inputs.name }}
+          cache-to: type=gha,scope=${{ inputs.name }},mode=max
+          # supply chain attestations attached to the image
+          provenance: mode=max
+          sbom: true
