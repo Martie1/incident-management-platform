@@ -1,21 +1,9 @@
-# build stage
-FROM eclipse-temurin:25-jdk-alpine AS builder
+# the jar is built and tested by CI (./gradlew bootJar) - this image only packages it
+# split the fat jar into layers so a code change doesn't re-push the dependencies
+FROM eclipse-temurin:25-jre-alpine AS extractor
 WORKDIR /workspace
-
-# copy gradle files
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle settings.gradle ./
-
-# make gradlew executable
-RUN chmod +x ./gradlew
-
-# download dependencies
-RUN ./gradlew dependencies --no-daemon || true
-
-# build application jar
-COPY src src
-RUN ./gradlew bootJar --no-daemon -x test
+COPY build/libs/app.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination extracted
 
 # runtime stage
 FROM eclipse-temurin:25-jre-alpine
@@ -25,10 +13,14 @@ WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# copy jar from build stage
-COPY --from=builder /workspace/build/libs/*.jar app.jar
+# least frequently changing layers first
+COPY --from=extractor /workspace/extracted/dependencies/ ./
+COPY --from=extractor /workspace/extracted/spring-boot-loader/ ./
+COPY --from=extractor /workspace/extracted/snapshot-dependencies/ ./
+COPY --from=extractor /workspace/extracted/application/ ./
 
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# size the heap from the container memory limit
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "org.springframework.boot.loader.launch.JarLauncher"]
