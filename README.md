@@ -105,6 +105,52 @@ logs don't need an exporter: promtail ships pod stdout to loki, the backend logs
   - alternative considered: micrometer gauges in the backend - no extra pod, but every backend replica would report the same database-wide numbers
 - every status/severity combination is always reported (also with 0), so panels and alerts show 0 instead of "no data"
 
+## dashboards and alerts
+
+everything ships with `charts/app-chart`, so argocd deploys monitoring together with the app:
+
+```
+backend / exporters ──> prometheus ──> PrometheusRule ──> alertmanager ──> alert-logger pod ──> loki ──> grafana
+                            └──────────────> grafana dashboards (ConfigMaps)
+```
+
+### dashboards
+
+`charts/app-chart/dashboards/*.json`, one ConfigMap each with label `grafana_dashboard: "1"`, the grafana sidecar from kube-prometheus-stack loads them (folder "General", tag `incident-platform`):
+
+| dashboard | panels |
+|---|---|
+| Incident Platform / Backend | pods up, request rate, 5xx ratio, p95 latency, firing alerts; traffic and latency per endpoint; heap, cpu, gc, threads, hikari pool, restarts; warn/error logs and alert notifications from loki |
+| Incident Platform / Incidents | unresolved/critical/unassigned incidents, oldest critical incident, users; current state and trends by status and severity |
+| Incident Platform / PostgreSQL | up, size, connection usage, cache hit ratio, tps, longest transaction; connections, transactions, row ops, locks |
+
+### alerts
+
+`templates/prometheusrule.yaml`, thresholds in `values.yaml` under `prometheusRule.thresholds`:
+
+| alert | severity | fires when |
+|---|---|---|
+| BackendDown | critical | no backend pod scrapeable for 1m |
+| BackendPodDown | warning | one backend pod not scrapeable for 3m |
+| PostgresDown | critical | `pg_up` not 1 (db unreachable or db pod gone) for 1m |
+| ExporterDown | warning | postgres_exporter or sql_exporter has no healthy target for 5m |
+| HighErrorRate | critical | >5% of api requests return 5xx for 5m |
+| HighLatencyP95 | warning | p95 api latency >1s for 10m |
+| CriticalIncidentOpenTooLong | critical | oldest unresolved CRITICAL incident older than 1h |
+| UnassignedIncidentsPilingUp | warning | >10 unresolved incidents without assignee for 15m |
+
+- api rate, 5xx ratio and p95 are recording rules (`job:http_server_requests:*`), actuator endpoints excluded
+- `AlertmanagerConfig` routes alerts from this namespace to a webhook receiver: `alert-logger` (http echo server) logs each notification as json, so firing/resolved alerts show up in the backend dashboard via loki
+- inhibit rules keep only the root cause: `BackendDown` mutes `BackendPodDown`, `PostgresDown` mutes `ExporterDown` for postgres_exporter
+- down alerts use `absent(... == 1)` so they also fire when the target disappears; `absent()` drops labels, so these rules set `namespace` explicitly for the route
+
+```bash
+# alertmanager ui
+kubectl port-forward svc/prometheus-stack-kube-prom-alertmanager -n monitoring 9093:9093
+# notifications received by the logger
+kubectl logs -n incident-app deploy/incident-management-platform-app-chart-alert-logger
+```
+
 ## stopping minikube
 
 when you are done, you can stop the local cluster:

@@ -80,3 +80,11 @@ sql_exporter selector labels
 {{ include "app-chart.baseSelectorLabels" . }}
 app.kubernetes.io/component: sql-exporter
 {{- end }}
+
+{{/*
+alert logger selector labels
+*/}}
+{{- define "app-chart.alertLoggerSelectorLabels" -}}
+{{ include "app-chart.baseSelectorLabels" . }}
+app.kubernetes.io/component: alert-logger
+{{- end }}

@@ -84,10 +84,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "app-chart.fullname" . }}-secret
                   key: POSTGRES_PASSWORD
-          readinessProbe:
-            httpGet:
-              path: /
-              port: metrics
           resources:
             {{- toYaml .Values.postgresExporter.resources | nindent 12 }}
         {{- end }}
