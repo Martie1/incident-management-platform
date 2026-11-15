@@ -1,0 +1,106 @@
+{{- define "app-chart.sqlExporterConfig" -}}
+global:
+  scrape_timeout_offset: 500ms
+  min_interval: {{ .Values.sqlExporter.minInterval }}
+  max_connections: 2
+  max_idle_connections: 2
+target:
+  name: {{ .Values.postgresql.auth.database }}
+  data_source_name: "postgres://{{ .Values.postgresql.auth.username | urlquery }}:{{ .Values.postgresql.auth.password | urlquery }}@{{ include "app-chart.fullname" . }}-db:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}?sslmode=disable"
+  collectors: [incidents]
+collector_files:
+  - "*.collector.yml"
+{{- end }}
+
+{{- if .Values.sqlExporter.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "app-chart.fullname" . }}-sql-exporter
+  labels:
+    {{- include "app-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-exporter
+type: Opaque
+stringData:
+  sql_exporter.yml: |
+    {{- include "app-chart.sqlExporterConfig" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app-chart.fullname" . }}-sql-exporter
+  labels:
+    {{- include "app-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-exporter
+data:
+  incidents.collector.yml: |
+    {{- .Files.Get "files/incidents.collector.yml" | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app-chart.fullname" . }}-sql-exporter
+  labels:
+    {{- include "app-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "app-chart.sqlExporterSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "app-chart.sqlExporterSelectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ print (include "app-chart.sqlExporterConfig" .) (.Files.Get "files/incidents.collector.yml") | sha256sum }}
+    spec:
+      containers:
+        - name: sql-exporter
+          image: "{{ .Values.sqlExporter.image.repository }}:{{ .Values.sqlExporter.image.tag }}"
+          imagePullPolicy: {{ .Values.sqlExporter.image.pullPolicy }}
+          args:
+            - --config.file=/etc/sql_exporter/sql_exporter.yml
+          ports:
+            - containerPort: 9399
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          resources:
+            {{- toYaml .Values.sqlExporter.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sql_exporter
+              readOnly: true
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "app-chart.fullname" . }}-sql-exporter
+              - configMap:
+                  name: {{ include "app-chart.fullname" . }}-sql-exporter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app-chart.fullname" . }}-sql-exporter
+  labels:
+    {{- include "app-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-exporter
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9399
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "app-chart.sqlExporterSelectorLabels" . | nindent 4 }}
+{{- end }}

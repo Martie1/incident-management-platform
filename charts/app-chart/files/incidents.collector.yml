@@ -1,0 +1,40 @@
+collector_name: incidents
+
+metrics:
+  - metric_name: incident_platform_incidents
+    type: gauge
+    help: Number of incidents by status and severity
+    key_labels: [status, severity]
+    values: [count]
+    query: |
+      SELECT s.status, v.severity, count(i.id) AS count
+      FROM (VALUES ('OPEN'), ('IN_PROGRESS'), ('RESOLVED')) AS s (status)
+      CROSS JOIN (VALUES ('LOW'), ('MEDIUM'), ('HIGH'), ('CRITICAL')) AS v (severity)
+      LEFT JOIN incidents i ON i.status = s.status AND i.severity = v.severity
+      GROUP BY s.status, v.severity
+
+  - metric_name: incident_platform_unassigned_open_incidents
+    type: gauge
+    help: Unresolved incidents without an assignee
+    values: [count]
+    query: |
+      SELECT count(*) AS count
+      FROM incidents
+      WHERE status <> 'RESOLVED' AND assignee_id IS NULL
+
+  - metric_name: incident_platform_oldest_open_incident_age_seconds
+    type: gauge
+    help: Age of the oldest unresolved incident by severity, 0 when there is none
+    key_labels: [severity]
+    values: [age]
+    query: |
+      SELECT v.severity, coalesce(extract(epoch FROM now() - min(i.created_at)), 0)::float8 AS age
+      FROM (VALUES ('LOW'), ('MEDIUM'), ('HIGH'), ('CRITICAL')) AS v (severity)
+      LEFT JOIN incidents i ON i.severity = v.severity AND i.status <> 'RESOLVED'
+      GROUP BY v.severity
+
+  - metric_name: incident_platform_users
+    type: gauge
+    help: Number of registered users
+    values: [count]
+    query: SELECT count(*) AS count FROM users

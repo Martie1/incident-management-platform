@@ -84,6 +84,27 @@ kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3001:80
 
 2. open `http://localhost:3001` (username: `admin`, password: `prom-operator`).
 
+## metrics and exporters
+
+every source is scraped by prometheus through a `ServiceMonitor` from `charts/app-chart`:
+
+| source | what | how |
+|---|---|---|
+| backend | http traffic and latency (histogram), jvm, hikari pool | spring boot actuator + micrometer, `/actuator/prometheus` |
+| postgres_exporter | database server: `pg_up`, connections, size, locks, transactions | sidecar in the postgres pod, connects over localhost |
+| sql_exporter | business metrics: incidents by status/severity, oldest open incident, unassigned incidents, users | queries in `charts/app-chart/files/incidents.collector.yml` |
+
+logs don't need an exporter: promtail ships pod stdout to loki, the backend logs json (`{namespace="incident-app"} | json | level="WARN"`).
+
+### why these exporters
+
+- **postgres_exporter** - the standard exporter for postgres metrics, maintained by prometheus-community, ready-made grafana dashboards exist for it
+  - its custom queries feature (`extend.query-path`) is deprecated, so it can't be used for the business metrics
+- **sql_exporter** - turns any sql query into a metric through config only, so business metrics need no code to build, test and ship
+  - replaced a custom python exporter that ran the same queries
+  - alternative considered: micrometer gauges in the backend - no extra pod, but every backend replica would report the same database-wide numbers
+- every status/severity combination is always reported (also with 0), so panels and alerts show 0 instead of "no data"
+
 ## stopping minikube
 
 when you are done, you can stop the local cluster:
