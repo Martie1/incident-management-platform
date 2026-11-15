@@ -23,14 +23,14 @@ app:
   probes:
     liveness:
       enabled: true
-      path: /api/incidents
+      path: /actuator/health/liveness
       port: 8080
       initialDelaySeconds: 45
       periodSeconds: 15
       failureThreshold: 3
     readiness:
       enabled: true
-      path: /api/incidents
+      path: /actuator/health/readiness
       port: 8080
       initialDelaySeconds: 25
       periodSeconds: 10
