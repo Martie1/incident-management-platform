@@ -29,11 +29,12 @@ chart label
 {{- end }}
 
 {{/*
-common labels
+common labels - without component, every resource adds its own
+(including the backend selector labels here duplicated the component key on frontend/db resources)
 */}}
 {{- define "app-chart.labels" -}}
 helm.sh/chart: {{ include "app-chart.chart" . }}
-{{ include "app-chart.selectorLabels" . }}
+{{ include "app-chart.baseSelectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -41,11 +42,18 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+labels shared by all components
+*/}}
+{{- define "app-chart.baseSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "app-chart.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
 backend selector labels
 */}}
 {{- define "app-chart.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "app-chart.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "app-chart.baseSelectorLabels" . }}
 app.kubernetes.io/component: backend
 {{- end }}
 
@@ -53,8 +61,7 @@ app.kubernetes.io/component: backend
 frontend selector labels
 */}}
 {{- define "app-chart.frontendSelectorLabels" -}}
-app.kubernetes.io/name: {{ include "app-chart.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "app-chart.baseSelectorLabels" . }}
 app.kubernetes.io/component: frontend
 {{- end }}
 
@@ -62,7 +69,14 @@ app.kubernetes.io/component: frontend
 database selector labels
 */}}
 {{- define "app-chart.dbSelectorLabels" -}}
-app.kubernetes.io/name: {{ include "app-chart.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "app-chart.baseSelectorLabels" . }}
 app.kubernetes.io/component: database
+{{- end }}
+
+{{/*
+sql_exporter selector labels
+*/}}
+{{- define "app-chart.sqlExporterSelectorLabels" -}}
+{{ include "app-chart.baseSelectorLabels" . }}
+app.kubernetes.io/component: sql-exporter
 {{- end }}
