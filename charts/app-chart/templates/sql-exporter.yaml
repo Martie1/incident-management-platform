@@ -6,7 +6,8 @@ global:
   max_idle_connections: 2
 target:
   name: {{ .Values.postgresql.auth.database }}
-  data_source_name: "postgres://{{ .Values.postgresql.auth.username | urlquery }}:{{ .Values.postgresql.auth.password | urlquery }}@{{ include "app-chart.fullname" . }}-db:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}?sslmode=disable"
+  {{- /* urlquery turns spaces into "+", which is a literal plus outside the query string */}}
+  data_source_name: "postgres://{{ .Values.postgresql.auth.username | urlquery | replace "+" "%20" }}:{{ .Values.postgresql.auth.password | urlquery | replace "+" "%20" }}@{{ include "app-chart.fullname" . }}-db:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database | urlquery | replace "+" "%20" }}?sslmode=disable"
   collectors: [incidents]
 collector_files:
   - "*.collector.yml"

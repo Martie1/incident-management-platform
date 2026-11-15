@@ -118,6 +118,35 @@ serviceMonitor:
   path: /actuator/prometheus
   labels:
     release: prometheus-stack
+grafanaDashboards:
+  enabled: true
+# alerting and recording rules for prometheus
+prometheusRule:
+  enabled: true
+  labels:
+    release: prometheus-stack
+  thresholds:
+    errorRatio: 0.05
+    errorRateMinRps: 0.1
+    latencyP95Seconds: 1
+    criticalIncidentMaxAgeSeconds: 3600
+    unassignedIncidents: 10
+# alertmanager route + webhook receiver that logs alerts
+alerting:
+  enabled: true
+  repeatInterval: 4h
+  logger:
+    image:
+      repository: mendhak/http-https-echo
+      tag: "43"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
 # ingress configuration
 ingress:
   enabled: true
