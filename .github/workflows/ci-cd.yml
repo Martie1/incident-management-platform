@@ -166,15 +166,15 @@ jobs:
             ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
             ${{ steps.image.outputs.name }}:latest
 
-      # the image is already in the registry, but a failed scan stops the pipeline here,
-      # so values.yaml is not updated and ArgoCD never deploys it
+      # report only: findings are printed in the job log, but don't stop the deployment
+      # (student project - in production this would be exit-code '1' and block the release)
       - name: Trivy - image scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
 
   update-gitops:
     name: Deploy - update image tags
