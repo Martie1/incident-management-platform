@@ -1,8 +1,8 @@
 # Incident Management Platform
 
 Spring Boot backend, React frontend and PostgreSQL, deployed to Kubernetes (minikube) with a Helm chart,
-GitHub Actions and ArgoCD (GitOps).
-
+GitHub Actions and ArgoCD  (GitOps).
+s
 ## Repository
 
 | Path | Content |
@@ -54,7 +54,9 @@ Open https://localhost:8080, user `admin`.
 kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3001:80
 ```
 
-Open http://localhost:3001 (`admin` / `prom-operator`). Dashboards: *Incident Platform / Backend, Incidents, PostgreSQL*.
+Open http://localhost:3001, user `admin`. The password is generated during installation:
+`kubectl get secret prometheus-stack-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d`.
+Dashboards: *Incident Platform / Backend, Incidents, PostgreSQL*. All passwords: [COMMANDS.md](COMMANDS.md#passwords).
 
 ## CI/CD
 

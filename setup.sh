@@ -70,6 +70,7 @@ Setup finished. ArgoCD is now deploying the application, watch it with:
 
 ArgoCD UI:   kubectl port-forward svc/argocd-server -n argocd 8080:443
              password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
-Grafana:     kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3001:80   (admin / prom-operator)
+Grafana:     kubectl port-forward svc/prometheus-stack-grafana -n monitoring 3001:80
+             password: kubectl get secret prometheus-stack-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d
 Application: minikube tunnel   (separate terminal), then http://incident-platform.local
 EOF
