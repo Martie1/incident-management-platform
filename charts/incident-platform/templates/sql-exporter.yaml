@@ -1,0 +1,110 @@
+# sql_exporter runs the SQL queries from files/incidents.collector.yml and exposes the results
+# as Prometheus metrics (business metrics: incidents by status/severity, oldest open incident, ...)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-exporter-config
+  labels:
+    app.kubernetes.io/name: sql-exporter
+    app.kubernetes.io/part-of: incident-platform
+data:
+  sql_exporter.yml: |
+    global:
+      # cache query results, so the database is queried at most every 10 seconds
+      min_interval: 10s
+    target:
+      name: {{ .Values.postgres.database }}
+      # placeholder - the real address with the password comes from SQLEXPORTER_TARGET_DSN (see the Deployment)
+      data_source_name: "postgres://set-from-env"
+      collectors: [incidents]
+    collector_files:
+      - "*.collector.yml"
+  incidents.collector.yml: |
+    {{- .Files.Get "files/incidents.collector.yml" | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql-exporter
+  labels:
+    app.kubernetes.io/name: sql-exporter
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sql-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sql-exporter
+        app.kubernetes.io/part-of: incident-platform
+      annotations:
+        # changing the queries changes this hash, which restarts the pod so it loads them
+        checksum/config: {{ .Files.Get "files/incidents.collector.yml" | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: sql-exporter
+          image: {{ .Values.sqlExporter.image }}
+          args:
+            - --config.file=/etc/sql_exporter/sql_exporter.yml
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+            # Kubernetes substitutes $(DB_USER) and $(DB_PASSWORD) with the values defined above
+            - name: SQLEXPORTER_TARGET_DSN
+              value: "postgres://$(DB_USER):$(DB_PASSWORD)@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable"
+          ports:
+            - name: metrics
+              containerPort: 9399
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.sqlExporter.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sql_exporter
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: sql-exporter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sql-exporter
+  labels:
+    app.kubernetes.io/name: sql-exporter
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  selector:
+    app.kubernetes.io/name: sql-exporter
+  ports:
+    - name: metrics
+      port: 9399
+      targetPort: metrics

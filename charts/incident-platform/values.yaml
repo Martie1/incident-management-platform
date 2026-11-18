@@ -1,0 +1,70 @@
+# Resources follow the course guidelines: memory request = memory limit, CPU request, no CPU limit.
+
+backend:
+  image:
+    repository: ghcr.io/martie1/incident-management-platform/backend
+    # updated by the CI pipeline after every merge to main
+    tag: "sha-c21bca5"
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 3
+    cpuUtilization: 70
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
+
+frontend:
+  image:
+    repository: ghcr.io/martie1/incident-management-platform/frontend
+    # updated by the CI pipeline after every merge to main
+    tag: "sha-c21bca5"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 64Mi
+
+postgres:
+  image: postgres:18-alpine
+  database: incidents
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 256Mi
+  exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.21.0
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 64Mi
+  backup:
+    schedule: "0 2 * * *"
+    storage: 1Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 128Mi
+
+sqlExporter:
+  image: burningalchemist/sql_exporter:0.24.14
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 64Mi
+
+ingress:
+  host: incident-platform.local
