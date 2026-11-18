@@ -23,3 +23,10 @@ spec:
       prune: true
       # revert manual changes made with kubectl
       selfHeal: true
+    # a failed sync (e.g. a webhook or CRD not ready yet) is retried: 10s, 20s, 40s, ... up to 3 minutes
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

@@ -1,135 +1,204 @@
-name: CI/CD Pipeline & GitOps Auto-Update
+# CI/CD pipeline
+#
+# pull request to main:  tests, lint, CodeQL, Trivy dependency scan       (CI - is the change safe to merge?)
+# push/merge to main:    the same + build images, Trivy image scan,
+#                        push to GHCR, write the new tag to values.yaml      (CD - ArgoCD deploys the new tag)
+#
+# Third-party actions are pinned to a commit SHA (the version is in the comment):
+# a tag can be moved to different code, a commit SHA can't.
+name: CI/CD
 
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'charts/app-chart/values.yaml'
+    branches: [main]
+    # changes only to the Helm chart don't need new images - ArgoCD deploys them directly
+    paths:
+      - 'app/**'
+      - '.github/workflows/**'
 
-# a newer push to main supersedes the running pipeline - only the latest commit gets deployed
+# a newer run for the same branch/PR cancels the older one
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# least privilege by default, jobs ask for more when they need it
 permissions:
   contents: read
 
 jobs:
   backend:
-    name: Backend - test & build jar
+    name: Backend - tests and jar
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '25'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
-      - name: Run tests (Spock & Spring Boot) and build jar
+      # Spock tests run against a real PostgreSQL started by Testcontainers
+      - name: Test and build jar
         working-directory: app/platform
         run: ./gradlew test bootJar
 
-      - name: Upload jar
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: backend-jar
+          name: backend
           path: app/platform/build/libs/app.jar
           retention-days: 1
 
   frontend:
-    name: Frontend - test & build bundle
+    name: Frontend - lint, tests and bundle
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: app/frontend/.nvmrc
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: app/frontend/package-lock.json
 
-      - name: Run tests (Vitest) and build bundle
+      - name: Lint, test and build
         working-directory: app/frontend
         run: |
           npm ci
+          npm run lint
           npm test
           npm run build
 
-      - name: Upload bundle
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: frontend-dist
+          name: frontend
           path: app/frontend/dist
           retention-days: 1
 
-  backend-image:
-    name: Backend image
-    needs: backend
+  # static analysis of our own code (SQL injection, XSS, ...), results in the repo's Security tab
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-    uses: ./.github/workflows/_docker-image.yml
-    with:
-      name: backend
-      context: app/platform
-      artifact: backend-jar
-      artifact-path: build/libs
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java-kotlin, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-  frontend-image:
-    name: Frontend image
-    needs: frontend
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+
+  # known vulnerabilities in dependencies (package-lock.json) and secrets committed by mistake
+  dependency-scan:
+    name: Trivy - dependencies and secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          # only fail on vulnerabilities that already have a fixed version
+          ignore-unfixed: true
+          exit-code: '1'
+
+  images:
+    name: Image - ${{ matrix.name }}
+    if: github.event_name == 'push'
+    needs: [backend, frontend, codeql, dependency-scan]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/_docker-image.yml
-    with:
-      name: frontend
-      context: app/frontend
-      artifact: frontend-dist
-      artifact-path: dist
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: app/platform
+            artifact-path: app/platform/build/libs
+          - name: frontend
+            context: app/frontend
+            artifact-path: app/frontend/dist
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifact-path }}
+
+      # GHCR needs a lowercase name, the GitHub owner name is not
+      - name: Image name and tag
+        id: image
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # arm64 for minikube on Apple Silicon Macs, amd64 for everything else
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+            ${{ steps.image.outputs.name }}:latest
+
+      # the image is already in the registry, but a failed scan stops the pipeline here,
+      # so values.yaml is not updated and ArgoCD never deploys it
+      - name: Trivy - image scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
 
   update-gitops:
-    name: Update Helm Values for ArgoCD GitOps
-    needs: [backend-image, frontend-image]
+    name: Deploy - update image tags
+    needs: images
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref_name }}
+          ref: main
 
-      - name: Update image tags in Helm values.yaml
-        env:
-          BACKEND_TAG: ${{ needs.backend-image.outputs.tag }}
-          FRONTEND_TAG: ${{ needs.frontend-image.outputs.tag }}
+      - name: Set new image tags in values.yaml
         run: |
-          yq -i '
-            .app.image.tag = strenv(BACKEND_TAG) |
-            .frontend.image.tag = strenv(FRONTEND_TAG)
-          ' charts/app-chart/values.yaml
-          git diff charts/app-chart/values.yaml
+          export TAG="sha-${GITHUB_SHA::7}"
+          yq -i '.backend.image.tag = strenv(TAG) | .frontend.image.tag = strenv(TAG)' charts/incident-platform/values.yaml
+          git diff
 
-      - name: Commit and push changes
+      # ArgoCD sees this commit and rolls out the new images
+      - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add charts/app-chart/values.yaml
+          git add charts/incident-platform/values.yaml
           git diff --staged --quiet && exit 0
-          git commit -m "chore(gitops): auto-update images to ${GITHUB_SHA::7} [skip ci]"
-          git push origin HEAD:${{ github.ref_name }}
+          git commit -m "deploy: images sha-${GITHUB_SHA::7} [skip ci]"
+          git push origin HEAD:main
