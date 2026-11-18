@@ -4,3 +4,10 @@ prometheus:
     # not only the ones labelled with this Helm release
     serviceMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
+
+grafana:
+  sidecar:
+    dashboards:
+      # load dashboard ConfigMaps (label grafana_dashboard: "1") from all namespaces,
+      # our dashboards live in incident-app
+      searchNamespace: ALL

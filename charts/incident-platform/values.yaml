@@ -40,7 +40,7 @@ postgres:
     limits:
       memory: 256Mi
   exporter:
-    image: quay.io/prometheuscommunity/postgres-exporter:v0.21.0
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.21.1
     resources:
       requests:
         cpu: 10m
