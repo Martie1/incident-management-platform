@@ -1,0 +1,46 @@
+# ServiceMonitors tell Prometheus (kube-prometheus-stack) which Services to scrape.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  endpoints:
+    - port: metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sql-exporter
+  labels:
+    app.kubernetes.io/name: sql-exporter
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sql-exporter
+  endpoints:
+    - port: metrics
+      interval: 30s

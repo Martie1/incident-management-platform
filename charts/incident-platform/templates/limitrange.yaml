@@ -1,0 +1,21 @@
+# Defaults for containers that don't declare resources (needed because the ResourceQuota
+# rejects pods without memory requests/limits) and upper bounds per container and per PVC.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: incident-platform
+  labels:
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 128Mi
+      default:
+        memory: 128Mi
+      max:
+        memory: 1Gi
+    - type: PersistentVolumeClaim
+      max:
+        storage: 2Gi

@@ -1313,39 +1313,6 @@
         "enableLogDetails": true,
         "dedupStrategy": "none"
       }
-    },
-    {
-      "type": "logs",
-      "title": "Alert notifications",
-      "description": "Webhooks Alertmanager sent to the alert-logger pod",
-      "id": 20,
-      "datasource": {
-        "type": "loki",
-        "uid": "${loki}"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 53,
-        "w": 24,
-        "h": 8
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "${loki}"
-          },
-          "expr": "{namespace=\"$namespace\", container=\"alert-logger\"} | json status=\"json.status\", alertname=\"json.groupLabels.alertname\", severity=\"json.commonLabels.severity\", summary=\"json.commonAnnotations.summary\" | status != \"\" | line_format \"{{.status}} [{{.severity}}] {{.alertname}}: {{.summary}}\"",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showTime": true,
-        "wrapLogMessage": true,
-        "sortOrder": "Descending",
-        "enableLogDetails": true,
-        "dedupStrategy": "none"
-      }
     }
   ]
 }

@@ -1,0 +1,18 @@
+# Upper limit for the whole namespace. Sized for the worst case: 3 backend pods (HPA max)
+# + 1 extra during a rolling update, frontend + 1 extra, postgres, both exporters and a backup job.
+# There is no limits.cpu on purpose - containers don't set CPU limits (only requests).
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: incident-platform
+  labels:
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 3Gi
+    limits.memory: 3Gi
+    pods: "15"
+    services: "10"
+    persistentvolumeclaims: "4"
+    requests.storage: 5Gi

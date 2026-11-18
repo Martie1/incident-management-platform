@@ -1,40 +1,5 @@
-# loki stack values
+# Loki stores the logs, Promtail (enabled by default) ships the stdout of every pod to it.
 loki:
-  enabled: true
+  # Prometheus from kube-prometheus-stack is already Grafana's default data source,
+  # Grafana refuses to start with two defaults
   isDefault: false
-  persistence:
-    enabled: false
-  config:
-    table_manager:
-      retention_deletes_enabled: true
-      retention_period: 48h
-
-promtail:
-  enabled: true
-  config:
-    logLevel: info
-    serverPort: 3101
-    clients:
-      - url: http://loki:3100/loki/api/v1/push
-    snippets:
-      extraScrapeConfigs: |
-        - job_name: incident-platform-logs
-          kubernetes_sd_configs:
-            - role: pod
-          relabel_configs:
-            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-              action: keep
-              regex: app-chart.*
-            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
-              target_label: component
-            - source_labels: [__meta_kubernetes_pod_name]
-              target_label: pod
-
-fluent-bit:
-  enabled: false
-
-grafana:
-  enabled: false
-
-prometheus:
-  enabled: false

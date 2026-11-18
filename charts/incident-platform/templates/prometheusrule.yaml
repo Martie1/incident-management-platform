@@ -1,0 +1,45 @@
+# Alerts evaluated by Prometheus, visible in the Prometheus/Alertmanager UI and on the backend dashboard.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: incident-platform
+  labels:
+    app.kubernetes.io/part-of: incident-platform
+spec:
+  groups:
+    - name: incident-platform
+      rules:
+        # absent() also fires when there is no backend target at all (e.g. deployment deleted)
+        - alert: BackendDown
+          expr: absent(up{namespace="{{ .Release.Namespace }}", job="backend"} == 1)
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: No backend pod is running, the API is unavailable
+
+        - alert: PostgresDown
+          expr: absent(pg_up{namespace="{{ .Release.Namespace }}"} == 1)
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: PostgreSQL is not reachable
+
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_server_requests_seconds_count{namespace="{{ .Release.Namespace }}", uri=~"/api/.*", status=~"5.."}[5m]))
+              / sum(rate(http_server_requests_seconds_count{namespace="{{ .Release.Namespace }}", uri=~"/api/.*"}[5m]))
+              > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: More than 5% of API requests fail with a 5xx error
+
+        - alert: CriticalIncidentOpenTooLong
+          expr: incident_platform_oldest_open_incident_age_seconds{namespace="{{ .Release.Namespace }}", severity="CRITICAL"} > 3600
+          labels:
+            severity: warning
+          annotations:
+            summary: A CRITICAL incident has been unresolved for more than 1 hour

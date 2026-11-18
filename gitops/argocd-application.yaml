@@ -1,8 +1,11 @@
+# ArgoCD watches charts/incident-platform on main and keeps the cluster in sync with it.
+# By default ArgoCD checks the repository every 3 minutes (timeout.reconciliation in argocd-cm).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: incident-management-platform
   namespace: argocd
+  # deleting the Application also deletes everything it deployed
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,16 +13,13 @@ spec:
   source:
     repoURL: https://github.com/Martie1/incident-management-platform.git
     targetRevision: main
-    path: charts/app-chart
-    helm:
-      valueFiles:
-        - values.yaml
+    path: charts/incident-platform
   destination:
     server: https://kubernetes.default.svc
     namespace: incident-app
   syncPolicy:
     automated:
+      # remove resources that were deleted from git
       prune: true
+      # revert manual changes made with kubectl
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true

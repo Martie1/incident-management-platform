@@ -1,0 +1,6 @@
+prometheus:
+  prometheusSpec:
+    # pick up ServiceMonitors and PrometheusRules from all namespaces,
+    # not only the ones labelled with this Helm release
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
