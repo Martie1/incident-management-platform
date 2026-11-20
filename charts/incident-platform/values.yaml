@@ -2,7 +2,7 @@ backend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/backend
     # updated by CI
-    tag: "sha-b0926b5"
+    tag: "sha-b2d0ae9"
   autoscaling:
     minReplicas: 2
     maxReplicas: 3
@@ -17,7 +17,7 @@ frontend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/frontend
     # updated by CI
-    tag: "sha-b0926b5"
+    tag: "sha-b2d0ae9"
   replicas: 1
   resources:
     requests:
