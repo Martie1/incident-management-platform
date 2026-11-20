@@ -1,11 +1,4 @@
-# CI/CD pipeline
-#
-# pull request to main:  tests, lint, CodeQL, Trivy dependency scan       (CI - is the change safe to merge?)
-# push/merge to main:    the same + build images, Trivy image scan,
-#                        push to GHCR, write the new tag to values.yaml      (CD - ArgoCD deploys the new tag)
-#
-# Third-party actions are pinned to a commit SHA (the version is in the comment):
-# a tag can be moved to different code, a commit SHA can't.
+# actions are pinned to commit SHAs because a tag can be moved
 name: CI/CD
 
 on:
@@ -13,12 +6,11 @@ on:
     branches: [main]
   push:
     branches: [main]
-    # changes only to the Helm chart don't need new images - ArgoCD deploys them directly
+    # chart-only changes don't need new images, ArgoCD deploys them directly
     paths:
       - 'app/**'
       - '.github/workflows/**'
 
-# a newer run for the same branch/PR cancels the older one
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -40,7 +32,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
-      # Spock tests run against a real PostgreSQL started by Testcontainers
       - name: Test and build jar
         working-directory: app/platform
         run: ./gradlew test bootJar
@@ -77,7 +68,6 @@ jobs:
           path: app/frontend/dist
           retention-days: 1
 
-  # static analysis of our own code (SQL injection, XSS, ...), results in the repo's Security tab
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
@@ -98,7 +88,6 @@ jobs:
 
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
 
-  # known vulnerabilities in dependencies (package-lock.json) and secrets committed by mistake
   dependency-scan:
     name: Trivy - dependencies and secrets
     runs-on: ubuntu-latest
@@ -111,7 +100,6 @@ jobs:
           scan-ref: .
           scanners: vuln,secret
           severity: HIGH,CRITICAL
-          # only fail on vulnerabilities that already have a fixed version
           ignore-unfixed: true
           exit-code: '1'
 
@@ -166,8 +154,7 @@ jobs:
             ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
             ${{ steps.image.outputs.name }}:latest
 
-      # report only: findings are printed in the job log, but don't stop the deployment
-      # (student project - in production this would be exit-code '1' and block the release)
+      # report only, doesn't block the deployment
       - name: Trivy - image scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -193,7 +180,6 @@ jobs:
           yq -i '.backend.image.tag = strenv(TAG) | .frontend.image.tag = strenv(TAG)' charts/incident-platform/values.yaml
           git diff
 
-      # ArgoCD sees this commit and rolls out the new images
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
