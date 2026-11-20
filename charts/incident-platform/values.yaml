@@ -1,9 +1,7 @@
-# Resources follow the course guidelines: memory request = memory limit, CPU request, no CPU limit.
-
 backend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/backend
-    # updated by the CI pipeline after every merge to main
+    # updated by CI
     tag: "sha-b0926b5"
   autoscaling:
     minReplicas: 2
@@ -18,7 +16,7 @@ backend:
 frontend:
   image:
     repository: ghcr.io/martie1/incident-management-platform/frontend
-    # updated by the CI pipeline after every merge to main
+    # updated by CI
     tag: "sha-b0926b5"
   replicas: 1
   resources:

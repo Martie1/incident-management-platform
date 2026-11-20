@@ -1,4 +1,3 @@
-# Alerts evaluated by Prometheus, visible in the Prometheus/Alertmanager UI and on the backend dashboard.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:

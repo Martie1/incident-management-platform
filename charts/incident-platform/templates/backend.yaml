@@ -16,7 +16,7 @@ metadata:
     app.kubernetes.io/name: backend
     app.kubernetes.io/part-of: incident-platform
 spec:
-  # no "replicas" here - the HorizontalPodAutoscaler below owns the replica count
+  # replicas left out on purpose, the HPA below sets them
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -38,7 +38,6 @@ spec:
         runAsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
-      # don't start Spring Boot before the database accepts connections
       initContainers:
         - name: wait-for-postgres
           image: {{ .Values.postgres.image }}
@@ -79,7 +78,6 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: password
-          # liveness and readiness only start after the app has booted
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

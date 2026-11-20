@@ -1,6 +1,5 @@
-# Least privilege: block all incoming traffic in the namespace, then allow only the connections
-# the application needs. Ports are container ports (not Service ports).
-# Requires a network plugin that enforces NetworkPolicy - Calico (minikube start --cni=calico).
+# deny all ingress, then allow only what the app needs (container ports, not Service ports)
+# only enforced with Calico (minikube start --cni=calico)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,7 +11,6 @@ spec:
   policyTypes:
     - Ingress
 ---
-# ingress controller -> frontend
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -33,7 +31,6 @@ spec:
       ports:
         - port: 8080
 ---
-# ingress controller (/api) and frontend nginx proxy -> backend, Prometheus -> /actuator/prometheus
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -54,8 +51,7 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: frontend
-        # namespaceSelector and podSelector in ONE element = both must match (AND):
-        # only Prometheus pods from the monitoring namespace
+        # namespaceSelector + podSelector in one element = AND, so only Prometheus pods from monitoring
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: monitoring
@@ -65,7 +61,6 @@ spec:
       ports:
         - port: 8080
 ---
-# backend, sql-exporter and backup job -> postgres, Prometheus -> postgres-exporter
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -104,7 +99,6 @@ spec:
   # no egress rules = the database can't open any outgoing connection
   egress: []
 ---
-# Prometheus -> sql-exporter
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

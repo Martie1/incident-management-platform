@@ -1,4 +1,3 @@
-# Simple fanout: "/" goes to the frontend, "/api" straight to the backend.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

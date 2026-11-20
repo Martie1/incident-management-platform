@@ -1,4 +1,3 @@
-# ServiceMonitors tell Prometheus (kube-prometheus-stack) which Services to scrape.
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
