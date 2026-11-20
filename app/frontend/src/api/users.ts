@@ -22,7 +22,6 @@ export function useUsers() {
   return useQuery({ queryKey: ['users'], queryFn: listUsers })
 }
 
-/** Creates a new user, or replaces `user` when given. */
 export function useSaveUser(user?: User) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -35,7 +34,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteUser,
-    // The backend unassigns the user's resolved incidents, so those change too.
+    // deleting a user unassigns their resolved incidents, so refetch those too
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['users'] }),

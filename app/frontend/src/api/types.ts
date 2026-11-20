@@ -42,12 +42,10 @@ export interface ProblemDetail {
   instance?: string
 }
 
-/** `IN_PROGRESS` -> `In progress` */
 export function label(value: Severity | Status): string {
   return value.charAt(0) + value.slice(1).toLowerCase().replace('_', ' ')
 }
 
-/** Shown for an `assigneeId` that doesn't match any known user. */
 export function unknownUserLabel(id: number): string {
   return `Unknown user (#${id})`
 }

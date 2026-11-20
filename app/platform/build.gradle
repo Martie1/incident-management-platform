@@ -54,7 +54,6 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// stable name for the Dockerfile, no separate plain jar
 tasks.named('bootJar') {
 	archiveFileName = 'app.jar'
 }

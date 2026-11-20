@@ -13,7 +13,6 @@ logging:
   level:
     root: INFO
     incident.management.platform: INFO
-    # Logbook writes request/response logs at TRACE
     org.zalando.logbook.Logbook: TRACE
   structured:
     format:

@@ -11,7 +11,6 @@ type Filter = 'status' | 'severity'
 
 export function IncidentsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  // Unknown values in the URL are ignored instead of being sent to the backend.
   const status = STATUSES.find((value) => value === searchParams.get('status'))
   const severity = SEVERITIES.find((value) => value === searchParams.get('severity'))
 

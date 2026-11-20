@@ -3,7 +3,6 @@ import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter } from 'react-router'
 
-/** Renders `ui` with a fresh QueryClient (no retries) and an in-memory router at `route`. */
 export function renderWithProviders(ui: ReactElement, { route = '/' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
