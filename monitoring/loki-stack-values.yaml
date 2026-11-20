@@ -1,5 +1,3 @@
-# Loki stores the logs, Promtail (enabled by default) ships the stdout of every pod to it.
 loki:
-  # Prometheus from kube-prometheus-stack is already Grafana's default data source,
-  # Grafana refuses to start with two defaults
+  # Prometheus is already the default data source and Grafana won't start with two
   isDefault: false

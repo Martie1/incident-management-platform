@@ -1,6 +1,4 @@
-# Applied by setup.sh before ArgoCD, because the postgres-credentials Secret has to be created in it first.
-# Pod Security Admission: "baseline" is enforced (blocks privileged pods), "restricted" only warns -
-# the official postgres image starts as root, which "restricted" would not allow.
+# "restricted" only warns because the official postgres image starts as root
 apiVersion: v1
 kind: Namespace
 metadata:
