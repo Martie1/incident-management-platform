@@ -8,7 +8,6 @@ import { renderWithProviders } from '../test/render'
 import { server } from '../test/server'
 import { UsersPage } from './UsersPage'
 
-/** In-memory user store behind GET/POST/DELETE, so mutations show up on refetch. */
 function mockUserStore() {
   let users: User[] = [...fixtures]
   server.use(

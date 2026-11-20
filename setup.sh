@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Creates a local minikube cluster with monitoring, ArgoCD and the incident platform.
-# Start from scratch with: minikube delete && ./setup.sh
 set -euo pipefail
 
 ARGOCD_VERSION=v3.6.1
@@ -20,10 +18,10 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 echo "==> minikube"
-# Calico: the default minikube network plugin does not enforce NetworkPolicy
+# Calico: the default minikube CNI doesn't enforce NetworkPolicy
 minikube start --driver=docker --cpus=4 --memory=6144 --cni=calico
 minikube addons enable ingress
-# metrics-server: needed by the HorizontalPodAutoscaler and kubectl top
+# metrics-server: needed by the HPA and kubectl top
 minikube addons enable metrics-server
 
 echo "==> monitoring (Prometheus, Grafana, Loki)"

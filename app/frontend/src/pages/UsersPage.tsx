@@ -24,7 +24,6 @@ export function UsersPage() {
         </button>
       </div>
 
-      {/* e.g. 409 when the user still has open incidents assigned */}
       {deleteUser.error && (
         <p role="alert" className="error">
           {deleteUser.error.message}

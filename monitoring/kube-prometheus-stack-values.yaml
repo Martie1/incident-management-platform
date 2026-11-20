@@ -1,13 +1,11 @@
 prometheus:
   prometheusSpec:
-    # pick up ServiceMonitors and PrometheusRules from all namespaces,
-    # not only the ones labelled with this Helm release
+    # pick up ServiceMonitors and PrometheusRules from all namespaces, not only this release's
     serviceMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
 
 grafana:
   sidecar:
     dashboards:
-      # load dashboard ConfigMaps (label grafana_dashboard: "1") from all namespaces,
-      # our dashboards live in incident-app
+      # load dashboard ConfigMaps from all namespaces
       searchNamespace: ALL

@@ -1,5 +1,3 @@
-# Headless Service (clusterIP: None) - required by the StatefulSet as its governing service.
-# The pod gets a stable DNS name: postgres-0.postgres.incident-app.svc.cluster.local
 apiVersion: v1
 kind: Service
 metadata:
@@ -39,8 +37,7 @@ spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       containers:
-        # the official image starts as root to prepare the data directory,
-        # then switches to the "postgres" user to run the server
+        # official image starts as root, then switches to the "postgres" user
         - name: postgres
           image: {{ .Values.postgres.image }}
           ports:
@@ -75,7 +72,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql
-        # sidecar: exposes database server metrics for Prometheus, connects over localhost
         - name: postgres-exporter
           image: {{ .Values.postgres.exporter.image }}
           ports:
@@ -102,7 +98,6 @@ spec:
               drop: ["ALL"]
           resources:
             {{- toYaml .Values.postgres.exporter.resources | nindent 12 }}
-  # one PersistentVolumeClaim per pod, created by the StatefulSet (data-postgres-0)
   volumeClaimTemplates:
     - metadata:
         name: data

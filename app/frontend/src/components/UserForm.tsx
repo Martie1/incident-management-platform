@@ -3,7 +3,6 @@ import type { User } from '../api/types'
 import { useSaveUser } from '../api/users'
 
 interface UserFormProps {
-  /** User to edit; a new one is created when omitted. */
   user?: User
   onDone: () => void
   onCancel: () => void

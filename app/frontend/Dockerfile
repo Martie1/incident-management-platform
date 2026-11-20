@@ -1,7 +1,6 @@
-# The bundle is built and tested by CI (npm run build), this image only serves it.
 FROM nginxinc/nginx-unprivileged:1.31-alpine
 
-# install security fixes released after the base image was built (found by the Trivy scan in CI)
+# pull security fixes released after the base image was built
 USER root
 RUN apk upgrade --no-cache
 USER 101

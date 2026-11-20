@@ -1,5 +1,4 @@
-# One ConfigMap per file in dashboards/. The Grafana sidecar from kube-prometheus-stack
-# loads every ConfigMap labelled grafana_dashboard: "1".
+# Grafana sidecar loads every ConfigMap labelled grafana_dashboard: "1"
 {{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
 ---
 apiVersion: v1

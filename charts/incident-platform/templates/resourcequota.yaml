@@ -1,6 +1,4 @@
-# Upper limit for the whole namespace. Sized for the worst case: 3 backend pods (HPA max)
-# + 1 extra during a rolling update, frontend + 1 extra, postgres, both exporters and a backup job.
-# There is no limits.cpu on purpose - containers don't set CPU limits (only requests).
+# no limits.cpu on purpose - containers only set CPU requests
 apiVersion: v1
 kind: ResourceQuota
 metadata:

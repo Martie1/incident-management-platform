@@ -1,5 +1,4 @@
-# Nightly pg_dump of the database to its own volume, dumps older than 7 days are removed.
-# Run it by hand: kubectl create job manual-backup --from=cronjob/postgres-backup -n incident-app
+# run manually: kubectl create job manual-backup --from=cronjob/postgres-backup -n incident-app
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

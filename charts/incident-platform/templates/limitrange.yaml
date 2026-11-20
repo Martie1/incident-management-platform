@@ -1,5 +1,4 @@
-# Defaults for containers that don't declare resources (needed because the ResourceQuota
-# rejects pods without memory requests/limits) and upper bounds per container and per PVC.
+# ResourceQuota rejects pods without memory requests/limits, so containers get defaults here
 apiVersion: v1
 kind: LimitRange
 metadata:

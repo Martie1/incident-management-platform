@@ -34,7 +34,6 @@ export function useIncidents({ status, severity }: IncidentFilters) {
   })
 }
 
-/** Creates a new incident, or replaces `incident` when given. */
 export function useSaveIncident(incident?: Incident) {
   const queryClient = useQueryClient()
   return useMutation({

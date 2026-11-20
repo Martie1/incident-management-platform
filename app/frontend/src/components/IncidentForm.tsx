@@ -12,7 +12,6 @@ import {
 } from '../api/types'
 
 interface IncidentFormProps {
-  /** Incident to edit; a new one is created when omitted. */
   incident?: Incident
   users: User[]
   onDone: () => void

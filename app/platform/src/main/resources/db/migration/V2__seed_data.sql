@@ -1,6 +1,3 @@
--- Initial data. Flyway applies each migration once per database, so changes made
--- through the application survive restarts and are never overwritten by this seed.
-
 INSERT INTO users (name, email) VALUES
     ('Anna Kowalska', 'anna.kowalska@example.com'),
     ('Piotr Nowak', 'piotr.nowak@example.com'),
