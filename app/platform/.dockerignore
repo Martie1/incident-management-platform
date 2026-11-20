@@ -1,3 +1,2 @@
-# the image only needs the jar built by CI
 *
 !build/libs/app.jar

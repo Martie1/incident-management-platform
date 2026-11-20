@@ -1,4 +1,3 @@
-# the image only needs the bundle built by CI and the nginx config
 *
 !dist
 !nginx.conf
